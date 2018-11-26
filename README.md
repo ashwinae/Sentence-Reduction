@@ -9,18 +9,22 @@ The sentence reduction and convert_puntcutation_to_dots functions make use of nu
 ## Examples:
 
 1. Original: "Would you please be able to get me a ticket to Los Angeles whenever you can?"
+
    Reduced: "get me a ticket to los angeles"
 
 2. Original: "Please help me order some pizza as soon as possible" 
+
    Reduced: "order some pizza"
 
    
 - Real Complaints:
 
 3. Original: "Replaced Control panel in door and checked...delay was due to both customers had limited availability because they are                   teachers."
+
    Reduced:  "Replaced control panel in door. Had limited availability"
 
 4. Original: "Burners too high adjusted burner valves"
+
    Reduced: "Adjusted burner valves"
 
 # What does each file contain?
