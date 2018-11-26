@@ -1,6 +1,6 @@
 # Sentence-Reduction
 
-The goal is to convert a verbsoe statement into a simple understandable statement, without losing the essence of the statement. The essence in this case is understood to be main intention of the statement. While these functions were developed to handle real-world customer complaints like "Pulley put grove into the tub. The washer need to be replaced. Not worth doing" to "washer need to be replaced", it also handles regular english statements.
+The goal is to convert a verbose statement into a simple understandable statement, without losing the essence of the statement. The essence in this case is understood to be main intention of the statement. While these functions were developed to handle real-world customer complaints like "Pulley put grove into the tub. The washer need to be replaced. Not worth doing" to "washer need to be replaced", it also handles regular english statements.
 
 For example, the goal is to reduce "I need to go to New York right now and there is no other way out" to "go to New York" and we achieve that by making use of both refining the punctuations and reducing the sentence. 
 
