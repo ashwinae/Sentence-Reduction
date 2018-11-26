@@ -5,36 +5,14 @@ Created on Thu Oct 18 14:13:11 2018
 
 @author: Ashwin
 """
-from preprocess.preprocess_rules import clean_data, sentence_reduction, convert_punctuation_to_dots, convert_and_reduce, translate, pre_escorts2
-
-def choose_column(columns):
-    words = ["work done", "customer call", "workdone", "call", "phone", "transfer",
-             "dealer", "duplicate", "assign", "kindly", "registered", "close", "time",
-             "show room", "showroom", "visit", "pay", "amount", "demand", "warranty",
-             "complaint"]
-    column = 0
-    while (column<len(columns)):
-        found = False
-        if(len(columns[column]) != 0):
-            for item in words:
-                if(item in columns[column]):
-                    found= True
-                    break
-            if found:
-                column+=1
-                continue
-            else:
-                return columns[column]
-        column+=1
-    return columns[0]
-        
+from Functions import sentence_reduction, convert_punctuation_to_dots, convert_and_reduce        
+from 
                    
 def sublist(lst1, lst2):
     return set(lst1) <= set(lst2)
 
 def validate_preprocess(content):
-    filters_fields = ["defect", "clean_data", "sentence_reduction", "convert_punctuation_to_dots", "convert_and_reduce", "spell_check", "grammar_correction", "translate", "duplicate_removal",
-                      "pre_escorts2"]
+    filters_fields = ["clean_data", "sentence_reduction", "convert_punctuation_to_dots", "convert_and_reduce"]
     keylist = content.keys()
     if("q" and "filters" not in keylist):
         return {'status' : False, 'message' : "Error: Input has a missing field(s)", "result": None}
@@ -68,11 +46,7 @@ def preprocess(content):
     modified_sentence = sentence
     
     for flag in filters:
-        if(flag == "pre_escort2"):
-            modified_sentence = pre_escorts2(modified_sentence)
-        if(flag == "defect" and '-' in sentence):
-            modified_sentence = sentence.split('-')[1]
-        elif(flag == "clean_data"):
+        if(flag == "clean_data"):
             modified_sentence = clean_data(modified_sentence, no_numbers = True)
         elif(flag == "translate"):
             modified_sentence = translate(modified_sentence)
