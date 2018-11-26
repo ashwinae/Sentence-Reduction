@@ -8,7 +8,10 @@ The sentence reduction and convert_puntcutation_to_dots functions make use of nu
 
 # What does each file contain?
 
-Preprocessing-Functions: Basic grammatical functions like clean_data, get_root, get_main_verbs
-Functions: Functons that build upon the grammatical functions in Preprocessing-Functions file to achieve the required output
-API-Functions: Functions required to create an API including error-handling and function calling
-API: Main API file which is run on a local server to activate the API
+- Preprocessing-Functions: Basic grammatical functions like clean_data, get_root, get_main_verbs
+
+- Functions: Functons that build upon the grammatical functions in Preprocessing-Functions file to achieve the required output
+
+- API-Functions: Functions required to create an API including error-handling and function calling
+
+- API: Main API file which is run on a local server to activate the API
