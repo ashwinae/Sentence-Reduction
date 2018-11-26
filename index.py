@@ -3,12 +3,11 @@
 """
 Created on Thu Oct 18 14:13:11 2018
 
-@author: Trudeau R. Fernandes
+@author: Ashwin
 """
 from flask import Flask, request, jsonify
-from preprocess.preprocess import preprocess
+from API-Functions import preprocess
 from common.configurator import Configurator
-from postprocess import BusinessCloud
 from common import appglobals
 
 config = None
@@ -26,7 +25,4 @@ def _preprocess():
 
 if __name__ == '__main__':
     appglobals.config = Configurator('config.txt')
-    BusinessCloud.ServiceManagement.registerEndPoints(app)
-    BusinessCloud.ITHelpDesk.registerEndPoints(app)
-    BusinessCloud.WarrantyAndClaims.registerEndPoints(app)
     app.run(debug = True, host='0.0.0.0', port=appglobals.config.getServerPort())
