@@ -16,10 +16,12 @@ The sentence reduction and convert_puntcutation_to_dots functions make use of nu
 
    
 - Real Complaints:
-    3. Original: "Replaced Control panel in door and checked...delay was due to both customers had limited availability because they are                     teachers."
-       Reduced:  "Replaced control panel in door. Had limited availability"
-    4. Original: "Burners too high adjusted burner valves"
-       Reduced: "Adjusted burner valves"
+
+3. Original: "Replaced Control panel in door and checked...delay was due to both customers had limited availability because they are                   teachers."
+   Reduced:  "Replaced control panel in door. Had limited availability"
+
+4. Original: "Burners too high adjusted burner valves"
+   Reduced: "Adjusted burner valves"
 
 # What does each file contain?
 
