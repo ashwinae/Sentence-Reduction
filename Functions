@@ -1,0 +1,588 @@
+#####################
+#Get Reduced Phrases#
+#####################
+
+#Function that takes in a list of verbose phrases and returns a new list of reduced simple phrases
+def get_phrases(data):
+    a = list()
+    noun_phrases = 0
+    data_verbs = main_verbs_data(data)
+
+    for i in range(0,len(data)):
+        question = 0
+        b = list()
+        doc = clean_data(data[i], nlp_model = True)
+        
+        transitive = []
+        
+        for i in range(0,len(doc)):
+            if(check_verb(doc[i]) == "TRANVERB"):
+                transitive.append(doc[i])        
+                
+        for i in range(0,len(doc)):    
+            if(len(transitive) == 0):
+                if(((doc[i]).tag_ == "WP") or (doc[i].tag_ == "WRB")):
+                    words = important_words(data)
+                    lemma = []
+                    for each in doc:
+                        lemma.append(each.lemma_)
+                        question = 1
+                
+        if(question == 1):  
+            for i in range(0, len(doc)):
+                if(set(words).issubset(set(lemma))):
+                    if((doc[i].pos_ == "NOUN") and (i != len(doc)-1)):
+                        if(doc[i].tag_ != "WP" and doc[i].tag_ != "WRB"):
+                            verb_noun_phrase(i , doc, a)                                    
+                            noun_phrases = 1
+                continue
+                
+        if(len(transitive) == 1):
+            for i in range(0, len(doc)):
+                if(str(doc[i]) == str(transitive[0])):
+                    verb_noun_phrase(i, doc, a)
+                    verb_noun_phrase(i, doc, b)
+                            
+        elif(len(transitive) > 1):
+            yes1 = 0
+            yes2 = 0
+            for i in range(0, len(data)):
+                if(str(transitive[0]) in data[i]):
+                    yes1 = yes1 + 1
+                if(str(transitive[1]) in data[i]):
+                    yes2 = yes2 + 1
+                    
+                if(yes1 > yes2):
+                    for i in range(0, len(doc)):
+                        if(str(doc[i]) == str(transitive[0])):
+                            verb_noun_phrase(i, doc, a)
+                            verb_noun_phrase(i, doc, b)
+                            
+                elif(yes2 > yes1):
+                    for i in range(0, len(doc)):
+                        if(str(doc[i]) == str(transitive[1])):
+                            verb_noun_phrase(i , doc, a)
+                            verb_noun_phrase(i , doc, b)
+                #if(len(b) == 0):
+
+        elif(len(transitive) == 0):
+            for i in range(0, len(doc) - 1):
+                for j in range(0,len(data_verbs)):
+                    if(str(data_verbs[j]) == str(doc[i])):
+                        verb_noun_phrase(i , doc, a)
+                        verb_noun_phrase(i , doc, b)
+                        continue
+                                    
+                if(check_verb(doc[i]) == "INTRANVERB"):
+                    if(str(doc[i]) == "is"):
+                        continue
+                
+                    if(check_verb(doc[i+1]) == "ADP"):
+                        verb_noun_phrase(i , doc, a)
+                        verb_noun_phrase(i , doc, b)
+                    
+                    elif(check_verb(doc[i+1]) == "DET"):
+                        verb_noun_phrase(i , doc, a)
+                        verb_noun_phrase(i , doc, b)
+                        
+                    else:
+                        verb_noun_phrase(i , doc, a)
+                        verb_noun_phrase(i , doc, b)
+        
+        if(len(b) == 0):
+            noun_phrases = 1
+   
+    if(noun_phrases == 1):
+        for i in range(0,len(data)):
+            doc = clean_data(data[i], nlp_model = True)
+            for i in range(0, len(doc)):
+                if(doc[i].pos_ == "NOUN" and i != len(doc)-1):  
+                    verb_noun_phrase(i , doc, a)
+                    
+    remove_super_short(a)   
+    imp_words = important_words(data)
+    
+    if(len(imp_words) != 0):
+        phrases = list()
+    
+        #Conditions to make sure that the phrases belong to the same intent 
+        for i in range(0,len(a)):
+            lemma = []
+            for each in a[i]:
+                lemma.append(each.lemma_)
+                
+            if(set(imp_words).issubset(set(lemma))):
+                phrases.append(a[i])
+        phrases = list(set([str(phrases[i]) for i in range(0, len(phrases))]))  
+        return phrases
+    
+    a = list(set([str(a[i]) for i in range(0, len(a))]))      
+    return a
+
+###########################################################################
+
+############################
+#Remove Similar Expressions#
+############################
+#To eliminate similar expressions in a specific intent. Function can be easily tweaked to prune out a larger number of expressions.
+#Eliminates only very similar expressions so as to avoid loss of information as of now.
+
+def remove_similar(examples): 
+    main_verbs = main_verbs_data(examples)
+    
+    examples1 = []
+    for items in examples:
+        examples1.append(clean_data(items, nlp_model = True)) 
+    
+    tags = ["ADJ", "VERB", "NUM", "ADV", "NOUN", "ADP"]
+    new_phrases=[]
+    for item in examples1:
+        new_phrases.append(item)
+
+    for doc1 in examples1:
+        for doc2 in examples1:
+            
+            if((doc1 in new_phrases) and (doc2 in new_phrases) and (doc1 != doc2)):
+
+                verb1 = get_main_verbs(str(doc1), main_verbs, examples)
+                verb2 = get_main_verbs(str(doc2), main_verbs, examples)
+                
+                if(len(verb1) == 0 or len(verb2) == 0):
+                    continue
+                verb1 = verb1[0]
+                verb2 = verb2[0]
+                verb1 = [doc.lemma_ for doc in nlp(str(verb1))]
+                verb2 = [doc.lemma_ for doc in nlp(str(verb2))] 
+                        
+                remaining1_tags = list()
+                remaining2_tags = list()
+                
+                lemma1 = list()
+                for each in doc1:
+                    lemma1.append(each.lemma_)
+
+                lemma2 = list()
+                for each in doc2:
+                    lemma2.append(each.lemma_)
+
+                intersection = [value for value in lemma1 if value in lemma2]   
+                remaining1 = [w for w in lemma1 if not w in intersection]
+                remaining2 = [w for w in lemma2 if not w in intersection]
+                                    
+                for each in nlp(' '.join(lemma1)):
+                    for token in remaining1:
+                        if(token == str(each)):
+                            if(each.pos_ in tags):
+                                remaining1_tags.append(each.pos_)
+                                                    
+                for each in nlp(' '.join(lemma2)):
+                    for token in remaining2:
+                        if(token == str(each)):
+                            if(each.pos_ in tags):
+                                remaining2_tags.append(each.pos_)
+                                    
+                if(verb1 == verb2):
+                            
+                    if(len(doc1) == len(doc2)):
+                                
+                        if(len(intersection) == len(doc1)):
+                            new_phrases.remove(doc1)
+                            
+                        #if(len(intersection) != len(doc1)):
+                        if(abs(len(doc1) - len(doc2) == 1)):
+                                    
+                            if(len(remaining1) < 2):
+                                if(len(remaining1_tags) == 0):
+                                    new_phrases.remove(doc1)
+                                    
+                            if(len(remaining2) < 2):
+                                if(len(remaining2_tags) == 0):
+                                    new_phrases.remove(doc2)
+                            
+                            if(remaining1_tags == remaining2_tags):               
+                                
+                                if(len(remaining1) == 1 and len(remaining2) == 1):
+                            
+                                    all_counter = word_counter(new_phrases)
+                                    if(all_counter[remaining1[0]] > all_counter[remaining2[0]]):
+                                        new_phrases.remove(doc1)
+                                    elif(all_counter[remaining1[0]] < all_counter[remaining2[0]]):
+                                        new_phrases.remove(doc2)
+                                                   
+                    elif(len(doc1) != len(doc2)):
+                        if(len(intersection) == len(doc1)):
+                            if(len(doc2) - len(intersection) < 2):
+                                if(len(remaining2_tags) == 0):
+                                    new_phrases.remove(doc2)
+                
+                if(verb1 != verb2):
+                    if(len(doc1)== len(doc2)):
+                        if(len(intersection) == len(doc1) - 1):
+                            all_counter = word_counter(new_phrases)
+                            if(all_counter[remaining1[0]] > all_counter[remaining2[0]]):
+                                new_phrases.remove(doc1)
+                            elif(all_counter[remaining1[0]] < all_counter[remaining2[0]]):
+                                new_phrases.remove(doc2)
+
+    new_phrases = list(set([str(new_phrases[i]) for i in range(0, len(new_phrases))]))                         
+    return new_phrases   
+####################################################################################
+    
+####################
+#Sentence Reduction#
+####################
+def sentence_reduction(doc, data = None, single_phrase = False):
+    
+    noise_set = ["is", "are", "were"]
+    a = list()
+    noun_phrases = 0
+    main_verb = list()
+    neg = ""
+#   question = 0
+    doc = clean_data(doc, nlp_model = True)
+    
+    for i in range(0, len(doc)):
+        if(doc[i].dep_ == "neg"):
+            neg = doc[i]
+               
+    if(len(neg) != 0):
+        return str(doc)
+      
+    transitive = []
+        
+    for i in range(0,len(doc)):
+        if(check_verb(doc[i]) == "TRANVERB"):
+            transitive.append(doc[i])        
+                   
+    if(len(transitive) == 1):
+        main_verb.append(transitive[0])
+        for i in range(0, len(doc)):
+            if(str(doc[i]) == str(transitive[0])):
+                verb_noun_phrase(i, doc, a)
+                            
+    elif(len(transitive) > 1 and data != None):
+
+        for i in range(0, len(data)):
+            for i in range(0, len(doc)):
+                if(str(doc[i]) == str(transitive[0])):
+                    verb_noun_phrase(i, doc, a)
+                            
+                if(str(doc[i]) == str(transitive[1])):
+                        verb_noun_phrase(i , doc, a)
+
+    elif(len(transitive) == 0):
+        for i in range(0, len(doc)):
+            if(check_verb(doc[i]) == "INTRANVERB" and str(doc[i]) not in noise_set):
+                if(i < len(doc) - 1):
+                
+                    if(check_verb(doc[i+1]) == "ADP"):
+                        main_verb.append(doc[i])
+                        verb_noun_phrase(i , doc, a)
+                    
+                    elif(check_verb(doc[i+1]) == "DET"):
+                        main_verb.append(doc[i])
+                        verb_noun_phrase(i , doc, a)
+                        
+                    else: 
+                        main_verb.append(doc[i])
+                        verb_noun_phrase(i , doc, a)
+                else:
+                    main_verb.append(doc[i])
+                    for j in range(0, len(doc)):
+                        if(doc[j].pos_ == "NOUN"):
+                            a.append(doc[j:len(doc)])
+        
+    if(len(a) == 0):
+        noun_phrases = 1
+   
+    if(noun_phrases == 1 and data != None):
+        for i in range(0,len(data)):
+            doc = clean_data(data[i], nlp_model = True)
+            for i in range(0, len(doc)):
+                if(doc[i].pos_ == "NOUN" and i != len(doc)-1):  
+                    verb_noun_phrase(i , doc, a)
+                    
+#    remove_super_short(a)
+
+    a = list(set([str(a[i]) for i in range(0, len(a))])) 
+    
+    if(len(a) == 0):
+        return ""
+    
+    if(single_phrase == True):
+        duplicate = []
+        for item in a:
+            duplicate.append(item)
+        counter_list = []
+
+        if(len(a) > 0):
+            for i in range(1, len(a)):
+                if(a[i-1] in duplicate and a[i] in duplicate):
+                    if(len(a[i-1]) > len(a[i])):
+                        temp = a[i-1].rsplit(a[i])
+                        counter_list = word_counter(temp, counter = True)
+                        if(counter_list['adposition'] > 0 and counter_list['noun'] > 0):
+                            if(('because' or 'due') in word_counter(temp).keys()):
+                                duplicate.remove(a[i])
+                                break
+
+                        if(counter_list['adverb'] > 0 and counter_list['noun'] > 0):
+                            duplicate.remove(a[i-1])
+                            break
+                        if(counter_list['noun'] > 0):
+                            duplicate.remove(a[i])
+                            break
+                    else:
+                        temp = a[i].rsplit(a[i-1])
+                        counter_list = word_counter(temp, counter = True)
+                        if(counter_list['adposition'] > 0 and counter_list['noun'] > 0):
+                            if(('because' or 'due') in word_counter(temp).keys()):
+                                duplicate.remove(a[i])
+                                break
+                        if(counter_list['adverb'] > 0 and counter_list['noun'] > 0):
+                            duplicate.remove(a[i])   
+                            break
+                        if(counter_list['noun'] > 0):
+                            duplicate.remove(a[i-1])   
+                            break
+                        
+            if(len(duplicate) > 0):
+                phrases_new = []
+                min_count = 255
+                min_thing = ""
+                for item in duplicate:
+                    if(len(item.split()) < min_count):
+                            min_count = len(item.split())
+                            min_thing = item
+                phrases_new.append(min_thing)
+            
+                return phrases_new[0]
+        
+        return duplicate
+        
+    return a
+################################################################################
+ 
+#######################################
+#Convert Punctuation (and And) to Dots#
+#######################################
+
+def convert_punctuation_to_dots(input_string):
+    punctuation = ['-', ',']
+    doc = clean_data(input_string, nlp_model = True, no_numbers = False)
+    
+    if(len(doc) == 0):
+        return input_string
+        
+    already_present = []
+    
+    for item in doc:
+        new = [str(item) for item in doc]
+    
+    #Dashes and commas that precede a verb are converted into dots. Everything else is retained the same way they are.
+    for i in range(1, len(doc)):
+        
+        if(str(doc[i]) in punctuation):
+            
+            if(doc[i-1].pos_ == "VERB" or "NOUN" or "ADJ"): 
+                new[i] = '.'
+
+    #Checks if '.' is ineeded necessary
+    phrases = (' '.join(new).split('.'))
+    phrases = list(filter(None, phrases))
+    phrases = [item.strip() for item in phrases]
+            
+    if(len(phrases) > 1):
+        for j in range(0,len(phrases)):    
+            split_words = phrases[j].split()
+            
+            for i in range(1, len(split_words)):
+                if(i < len(split_words)):
+                    if(split_words[i-1] == split_words[i]):
+                        split_words.pop(i)
+        
+            phrases[j] = ' '.join(split_words)
+        
+        temp_phrases = []
+        for i in phrases:
+            temp_phrases.append(i)
+        
+        for j in range(0, len(phrases)):
+            count = 0
+            if(j > len(phrases) - 1):
+                break
+            
+            individual_words = phrases[j].split()      
+    
+            phrases[j] = ' '.join(individual_words)
+
+            if("and" in phrases[j]):       
+                individual_phrases = phrases[j].split("and")
+                individual_phrases = list(filter(None, individual_phrases))
+                individual_phrases = [item.strip() for item in individual_phrases]
+            
+                for i in range(0, len(individual_phrases)):
+                    noun_words = get_pos(individual_phrases[i], nouns = True)
+                    verb_words = get_pos(individual_phrases[i], verbs = True)
+            
+                    if((len(individual_phrases[i].split()) == 1 and len(verb_words) == 1) or (len(verb_words) == 0 and len(noun_words) > 0)):
+                        if(i == 0):
+                            individual_phrases[i] = individual_phrases[i] + ' and '
+                            continue
+                
+                        elif(len(get_main_verbs(individual_phrases[i-1])) != 0):
+                            individual_phrases[i] = ' and ' + individual_phrases[i] 
+                            
+                        elif(i < len(individual_phrases) - 2 and len(get_main_verbs(individual_phrases[i+1])) != 0):
+                            individual_phrases[i] = individual_phrases[i] + " and"
+        
+                    else:
+                        if(i != 0):
+                            word = individual_phrases[i-1].split()
+                            if(len(word)!=0):
+                                if(word[len(word)-1] != "and"):
+                                    individual_phrases[i] = '. ' + individual_phrases[i]
+                
+                phrases[j] = ' '.join(individual_phrases)
+                
+                if(j != 0):
+                    phrases[j] = ". " + phrases[j]
+                continue
+            
+            noun_words = get_pos(phrases[j], nouns = True)
+            verb_words = get_pos(phrases[j], verbs = True)
+        
+            if(len(noun_words) != 0):
+                for i in noise:
+                    if(i in noun_words):
+                        noun_words.remove(i)
+        
+            if(count == 1):
+                continue
+        
+            if(len(get_main_verbs(phrases[j])) != 0 and j != 0):      ##MAKES USE OF MAIN VERBS FUNCTION   
+                phrases[j] = '. ' + phrases[j]
+                continue
+
+            if(len(get_main_verbs(phrases[j])) == 0 and j != 0):    
+                if(len(phrases[j].split()) == 1 and len(noun_words) == 1):
+                    phrases[j] = "and " + phrases[j]
+                    count = 1       
+                    continue                        
+
+                elif(len(noun_words) == 1):                       
+                    if(len(verb_words) == 0):
+                        temp_phrases.remove(phrases[j])
+                        count = 1  
+                        continue
+                
+                elif(len(noun_words) == 0):
+                    temp_phrases.remove(phrases[j])
+                    continue
+
+                elif(len(noun_words) > 1):
+                    temp_count = 0
+                    for i in noun_words:
+                        if(i in nouns):
+                            temp_count = 1
+                    if(temp_count == 0):
+                        temp_phrases.remove(phrases[j])
+                        continue
+                
+                else:
+                    phrases[j] = '. ' + phrases[j]
+                
+        
+            if(len(get_main_verbs(phrases[j])) == 0 and j == 0):    
+                if(len(noun_words) == 1 and len(verb_words) == 0):
+                    temp_phrases.remove(phrases[j])
+                    continue
+                       
+            if(count == 0 and j != 0):
+                phrases[j] = '. ' + phrases[j]
+                continue
+        
+            phrases = list(filter(None, phrases))
+          
+    check_phrases = phrases.copy()
+     
+    for i in range(0,len(temp_phrases)):
+        temp_phrases[i] = re.sub("[^a-zA-Z0-9/]", " ", temp_phrases[i]) 
+        temp_phrases[i] = re.sub("and ", "", temp_phrases[i])
+        temp_phrases[i] = temp_phrases[i].strip()
+        temp_phrases[i] = re.sub(' +', ' ',temp_phrases[i])
+        
+        
+    item = check_phrases[0]
+    
+    for item in check_phrases:
+        item_clean = re.sub("[^a-zA-Z0-9/]", " ", item)
+        item_clean = re.sub("and ", "", item_clean)
+        item_clean = item_clean.strip()
+        item_clean = re.sub(' +', ' ',item_clean)
+        if(item_clean not in temp_phrases):
+            check_phrases.remove(item)
+    
+    phrases = check_phrases
+
+    for i in range(0, len(phrases)):
+        individual_words = phrases[i].split()
+        for word in nlp(phrases[i]):
+            if(word.pos_ == "ADV" and word.text != "not"):
+                if(str(word) in individual_words):
+                    individual_words.remove(str(word))
+    
+        for k in range(1, len(individual_words)):
+                if(k < len(individual_words)):
+                    if(individual_words[k-1] == individual_words[k]):
+                        individual_words.pop(k)
+    
+        if(i == 0 and len(individual_words) > 0 and individual_words[0] == '.'):
+            individual_words.pop(0)
+            
+        if(len(individual_words) > 0 and individual_words[len(individual_words)-1] == "and"):
+            individual_words.pop(len(individual_words) - 1)
+        
+        phrases[i] = ' '.join(individual_words)
+
+    clean_statement = ' '.join(phrases)
+    clean_statement = re.sub("[()]", ".", clean_statement)
+    
+    if(len(clean_statement) == 0):
+        clean_statement = str(doc)
+    
+    return clean_statement
+####################################################################################
+
+#################################################
+#Convert Punctuation to Dots and Reduce Sentence#
+#################################################
+
+def convert_and_reduce(input_string):
+    phrases_new = []
+    phrases1 = []
+    statement = convert_punctuation_to_dots(input_string)
+    phrases = statement.split('.')
+
+    for item in phrases:
+        #Passing a condition since Sentence Reduction module doesn't support statements with "and" yet
+        if("and" in item and len(get_pos(item, verbs = True)) > 1):
+            phrases1.append(item)
+            
+        else:
+            phrases1.append(sentence_reduction(item, single_phrase = True))
+    
+    phrases1 = list(filter(None, phrases1))
+    for i in phrases1:
+        phrases_new.append(i)
+        
+    for i in range(0,len(phrases1)):
+        if(len(phrases1[i]) == 0 and phrases1[i] in phrases_new):
+            phrases_new.pop(i)
+    
+    if(len(phrases_new) == 0):
+        return '. '.join(phrases)
+    
+    return '. '.join(phrases_new)
+##############################################################
+
