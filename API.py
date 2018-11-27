@@ -14,11 +14,11 @@ config = None
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 
-@app.route('/preprocess', methods=['POST'])
+@app.route('/reduce', methods=['POST'])
 def _preprocess():
     try:
         content = request.get_json()
-        return jsonify(preprocess(content))
+        return jsonify(reduce(content))
     except ValueError:
         return jsonify({'status' : False, 'message' : "Input needs to be in json format", "result": None})
 
