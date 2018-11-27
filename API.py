@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 
 @app.route('/reduce', methods=['POST'])
-def _preprocess():
+def _reduce():
     try:
         content = request.get_json()
         return jsonify(reduce(content))
