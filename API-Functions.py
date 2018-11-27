@@ -11,7 +11,7 @@ from
 def sublist(lst1, lst2):
     return set(lst1) <= set(lst2)
 
-def validate_preprocess(content):
+def validate_reduction(content):
     filters_fields = ["clean_data", "sentence_reduction", "convert_punctuation_to_dots", "convert_and_reduce"]
     keylist = content.keys()
     if("q" and "filters" not in keylist):
@@ -29,7 +29,7 @@ def validate_preprocess(content):
     else:
         return {'status' : True}
 
-def preprocess(content):
+def sentence_reduction(content):
     filters = content['filters']
     columns = content['q']
     filters = content['filters']
@@ -48,8 +48,6 @@ def preprocess(content):
     for flag in filters:
         if(flag == "clean_data"):
             modified_sentence = clean_data(modified_sentence, no_numbers = True)
-        elif(flag == "translate"):
-            modified_sentence = translate(modified_sentence)
         elif("sentence_reduction" in filters and "convert_punctuation_to_dots" in filters):
             modified_sentence = convert_and_reduce(modified_sentence)
             break
