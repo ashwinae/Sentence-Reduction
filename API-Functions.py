@@ -29,7 +29,7 @@ def validate_reduction(content):
     else:
         return {'status' : True}
 
-def sentence_reduction(content):
+def reduce(content):
     filters = content['filters']
     columns = content['q']
     filters = content['filters']
