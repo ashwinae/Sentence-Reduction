@@ -249,7 +249,7 @@ def sentence_reduction(doc, data = None, single_phrase = False):
     noun_phrases = 0
     main_verb = list()
     neg = ""
-#   question = 0
+   question = 0
     doc = clean_data(doc, nlp_model = True)
     
     for i in range(0, len(doc)):
